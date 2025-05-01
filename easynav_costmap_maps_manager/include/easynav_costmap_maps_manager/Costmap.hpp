@@ -20,15 +20,8 @@
 /// \file
 /// \brief Declaration of the Costmap type.
 
-#ifndef EASYNAV__COSTMAP_HPP_
-#define EASYNAV__COSTMAP_HPP_
-
-#include <vector>
-#include <stdexcept>
-#include <algorithm>
-#include <utility>
-#include <fstream>
-#include <sstream>
+#ifndef EASYNAV_COSTMAP__COSTMAP_HPP_
+#define EASYNAV_COSTMAP__COSTMAP_HPP_
 
 #include "easynav_common/types/MapTypeBase.hpp"
 #include "nav2_costmap_2d/costmap_2d.hpp"
@@ -38,17 +31,22 @@ namespace easynav
 
 /**
  * @class Costmap
- * @brief A 2D costmap provides a mapping between points in the world and their associated "costs".
+ * @brief A 2D costmap that represents spatial information as navigation costs.
  *
- * This class is a wrapper around the nav2_costmap_2d::Costmap2D class.
- * It provides a simple interface for creating and manipulating costmaps.
+ * This class extends both nav2_costmap_2d::Costmap2D and MapsTypeBase.
+ * It wraps a nav_msgs::msg::OccupancyGrid into a costmap structure for efficient access
+ * and processing in navigation tasks.
  */
 class Costmap : public MapsTypeBase, public nav2_costmap_2d::Costmap2D
 {
 public:
   /**
-   * @brief Constructor for a costmap
-   * @param map The OccupancyGrid map to create costmap 2D
+   * @brief Constructor that initializes the costmap from an OccupancyGrid message.
+   *
+   * This converts a standard ROS 2 OccupancyGrid message into a costmap usable
+   * by Nav2-compatible tools and planners.
+   *
+   * @param map The input OccupancyGrid map.
    */
   inline Costmap(const nav_msgs::msg::OccupancyGrid & map)
   : nav2_costmap_2d::Costmap2D(map) {}
@@ -56,4 +54,4 @@ public:
 
 }  // namespace easynav
 
-#endif  // EASYNAV_PLANNER__COSTMAP_HPP_
+#endif  // EASYNAV_COSTMAP__COSTMAP_HPP_

@@ -20,8 +20,8 @@
 /// \file
 /// \brief Declaration of the CostmapMapsManager method.
 
-#ifndef EASYNAV_PLANNER__COSTMAPMAPMANAGER_HPP_
-#define EASYNAV_PLANNER__COSTMAPMAPMANAGER_HPP_
+#ifndef EASYNAV_COSTMAP__COSTMAPMAPMANAGER_HPP_
+#define EASYNAV_COSTMAP__COSTMAPMAPMANAGER_HPP_
 
 #include <vector>
 #include <stdexcept>
@@ -34,19 +34,18 @@
 #include "easynav_common/types/MapTypeBase.hpp"
 #include "easynav_costmap_maps_manager/Costmap.hpp"
 
-#include "nav2_costmap_2d/costmap_2d.hpp"
-#include "nav2_costmap_2d/cost_values.hpp"
 #include "nav2_costmap_2d/costmap_2d_publisher.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 namespace easynav
 {
 
 /**
  * @class CostmapMapsManager
- * @brief A default "simple" implementation for the Planner Method.
+ * @brief Implementation of the MapsManagerBase that uses costmaps.
  *
- * This planning method does nothing. It serves as an example, and will be used as a default plugin implementation
- * if the navigation system configuration does not specify one.
+ * This class manages both static and dynamic maps using costmaps.
+ * It provides facilities to update the maps from perceptions and export them as OccupancyGrid.
  */
 class CostmapMapsManager : public easynav::MapsManagerBase
 {
@@ -55,64 +54,85 @@ public:
   ~CostmapMapsManager() = default;
 
   /**
-   * @brief Initialize the planning method.
+   * @brief Initializes the map manager.
    *
-   * It is not required to override this method. Only if the derived class
-   * requires further initialization than the provided by the base class.
+   * Can be overridden to perform custom initialization such as loading parameters
+   * or setting up publishers and services.
+   *
+   * @return std::expected indicating success or failure message.
    */
   virtual std::expected<void, std::string> on_initialize() override;
 
   /**
-   * @brief Get the current path.
+   * @brief Get the current static map.
    *
-   * This method should return the last path computed.
-   * It should not run the planning algorithm (see update method).
+   * Returns the latest static map generated or stored by the manager.
    *
-   * @return A TwistStamped message with the current path.
+   * @return A shared pointer to the static map.
    */
   [[nodiscard]] virtual std::shared_ptr<MapsTypeBase> get_static_map() override;
 
   /**
-   * @brief Get the current path.
+   * @brief Get the current dynamic map.
    *
-   * This method should return the last path computed.
-   * It should not run the planning algorithm (see update method).
+   * Returns the latest dynamic map generated from the latest perceptions.
    *
-   * @return A TwistStamped message with the current path.
+   * @return A shared pointer to the dynamic map.
    */
   [[nodiscard]] virtual std::shared_ptr<MapsTypeBase> get_dynamyc_map() override;
 
   /**
-   * @brief Run the path planning method and update the path.
+   * @brief Updates the map based on the current navigation state.
    *
-   * This method will be called by the system's PlannerNode to run the planning algorithm.
+   * This method uses new perceptions from the navigation state to update
+   * the internal static or dynamic map representation.
    *
-   * @param nav_state The current state of the navigation system.
+   * @param nav_state The current navigation state, including new perceptions.
    */
   virtual void update(const NavState & nav_state) override;
 
 private:
   /**
-   * @brief Current static map.
+   * @brief Static costmap representation.
    */
   std::shared_ptr<Costmap> static_map_;
 
   /**
-   * @brief Current static map.
+   * @brief Dynamic costmap representation updated from perceptions.
    */
   std::shared_ptr<Costmap> dynamic_map_ = nullptr;
 
   /**
-   * @brief Publisher for translated costmap values as msg::OccupancyGrid used in visualization
+   * @brief Publisher to convert and publish the static costmap as a nav_msgs::msg::OccupancyGrid.
    */
   std::shared_ptr<nav2_costmap_2d::Costmap2DPublisher> static_costmap_pub_;
 
   /**
-   * @brief Publisher for translated costmap values as msg::OccupancyGrid used in visualization
+   * @brief Publisher to convert and publish the dynamic costmap as a nav_msgs::msg::OccupancyGrid.
    */
   std::shared_ptr<nav2_costmap_2d::Costmap2DPublisher> dynamic_costmap_pub_;
+
+  /**
+   * @brief Minimum Z threshold for filtering 3D point data.
+   */
+  double z_min_;
+
+  /**
+   * @brief Maximum Z threshold for filtering 3D point data.
+   */
+  double z_max_;
+
+  /**
+   * @brief Service to trigger saving the static map to disk.
+   */
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr savemap_srv_;
+
+  /**
+   * @brief Path to the file where the map should be saved.
+   */
+  std::string map_path_;
 };
 
 }  // namespace easynav
 
-#endif  // EASYNAV_PLANNER__COSTMAPMAPMANAGER_HPP_
+#endif  // EASYNAV_COSTMAP__COSTMAPMAPMANAGER_HPP_

@@ -17,8 +17,8 @@ find_package(easynav_core REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
-find_package(tf2_ros REQUIRED)
 find_package(nav2_map_server REQUIRED)
+find_package(std_srvs REQUIRED)
 
 set(dependencies
   rclcpp
@@ -26,12 +26,10 @@ set(dependencies
   easynav_common
   easynav_core
   pluginlib
-  nav_msgs
-  geometry_msgs
   ament_index_cpp
   nav2_costmap_2d
-  tf2_ros
   nav2_map_server
+  std_srvs
 )
 
 include_directories(include)

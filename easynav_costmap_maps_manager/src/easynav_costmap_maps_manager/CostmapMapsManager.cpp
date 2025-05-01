@@ -21,11 +21,13 @@
 /// \brief Implementation of the CostmapMapsManager class.
 
 #include <expected>
+
 #include "easynav_costmap_maps_manager/CostmapMapsManager.hpp"
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "ament_index_cpp/get_package_prefix.hpp"
 #include "nav2_map_server/map_io.hpp"
+#include "nav2_costmap_2d/cost_values.hpp"
 
 namespace easynav
 {
@@ -39,9 +41,13 @@ CostmapMapsManager::on_initialize()
   std::string package_name, map_path_file;
   node->declare_parameter(plugin_name + ".package", package_name);
   node->declare_parameter(plugin_name + ".map_path_file", map_path_file);
+  node->declare_parameter(plugin_name + ".z_min", z_min_);
+  node->declare_parameter(plugin_name + ".z_max", z_max_);
 
   node->get_parameter(plugin_name + ".package", package_name);
   node->get_parameter(plugin_name + ".map_path_file", map_path_file);
+  node->get_parameter(plugin_name + ".z_min", z_min_);
+  node->get_parameter(plugin_name + ".z_max", z_max_);
 
   nav2_map_server::LoadParameters load_parameters;
 
@@ -53,17 +59,17 @@ CostmapMapsManager::on_initialize()
       return std::unexpected("Package " + package_name + " not found. Error: " + ex.what());
     }
 
-    std::string map_path = pkgpath + "/" + map_path_file;
+    map_path_ = pkgpath + "/" + map_path_file;
 
     try {
-      load_parameters = nav2_map_server::loadMapYaml(map_path);
+      load_parameters = nav2_map_server::loadMapYaml(map_path_);
     } catch (std::exception & ex) {
-      return std::unexpected("Error loading map from " + map_path + ": " + ex.what());
+      return std::unexpected("Error loading map from " + map_path_ + ": " + ex.what());
     }
   }
 
   nav_msgs::msg::OccupancyGrid map;
-  
+
   try {
     nav2_map_server::loadMapFromFile(load_parameters, map);
   } catch (std::exception & ex) {
@@ -76,16 +82,33 @@ CostmapMapsManager::on_initialize()
   static_costmap_pub_ = std::make_shared<nav2_costmap_2d::Costmap2DPublisher>(
     node,
     static_map_.get(),
-    "map", 
-    "/map",     
+    "map",
+    node->get_name() + std::string("/") + plugin_name + "/map",
     true);
 
   dynamic_costmap_pub_ = std::make_shared<nav2_costmap_2d::Costmap2DPublisher>(
     node,
     dynamic_map_.get(),
-    "map", 
-    "/dynamic_map",     
+    "map",
+    node->get_name() + std::string("/") + plugin_name + "/dynamic_map",
     true);
+
+  savemap_srv_ = node->create_service<std_srvs::srv::Trigger>(
+    node->get_name() + std::string("/") + plugin_name + "/savemap",
+    [this](
+      const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+      std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+    {
+      (void)request;
+      if (!static_map_->saveMap(map_path_)) {
+        response->success = false;
+        response->message = "Failed to save map to: " + map_path_;
+      } else {
+        response->success = true;
+        response->message = "Map successfully saved to: " + map_path_;
+      }
+    });
+
 
   static_costmap_pub_->on_activate();
   dynamic_costmap_pub_->on_activate();
@@ -118,7 +141,9 @@ CostmapMapsManager::update(const NavState & nav_state)
   for (const auto & sensor : nav_state.perceptions) {
     for (const auto & p : sensor->data) {
       unsigned int mx, my;
-      if (dynamic_map_->worldToMap(-p.x, -p.y, mx, my)) {
+      if (dynamic_map_->worldToMap(p.x, p.y, mx, my) &&
+        p.z >= z_min_ && p.z <= z_max_)
+      {
         dynamic_map_->setCost(mx, my, nav2_costmap_2d::LETHAL_OBSTACLE);
       }
     }
