@@ -113,6 +113,16 @@ private:
   std::shared_ptr<nav2_costmap_2d::Costmap2DPublisher> dynamic_costmap_pub_;
 
   /**
+   * @brief Service to trigger saving the static map to disk.
+   */
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr savemap_srv_;
+
+  /**
+   * @brief Subscriber for external incoming static map updates.
+   */
+  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr incoming_map_sub_;
+
+  /**
    * @brief Minimum Z threshold for filtering 3D point data.
    */
   double z_min_;
@@ -121,11 +131,6 @@ private:
    * @brief Maximum Z threshold for filtering 3D point data.
    */
   double z_max_;
-
-  /**
-   * @brief Service to trigger saving the static map to disk.
-   */
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr savemap_srv_;
 
   /**
    * @brief Path to the file where the map should be saved.

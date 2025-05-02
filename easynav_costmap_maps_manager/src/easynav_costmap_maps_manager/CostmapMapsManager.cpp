@@ -93,6 +93,16 @@ CostmapMapsManager::on_initialize()
     node->get_name() + std::string("/") + plugin_name + "/dynamic_map",
     true);
 
+  incoming_map_sub_ = node->create_subscription<nav_msgs::msg::OccupancyGrid>(
+    node->get_name() + std::string("/") + plugin_name + "/incoming_map",
+    rclcpp::QoS(1).transient_local().reliable(),
+    [this](nav_msgs::msg::OccupancyGrid::UniquePtr msg) {
+      static_map_ = std::make_shared<Costmap>(*msg);
+      dynamic_map_ = std::make_shared<Costmap>(*msg);
+
+      static_costmap_pub_->publishCostmap();
+    });
+
   savemap_srv_ = node->create_service<std_srvs::srv::Trigger>(
     node->get_name() + std::string("/") + plugin_name + "/savemap",
     [this](
