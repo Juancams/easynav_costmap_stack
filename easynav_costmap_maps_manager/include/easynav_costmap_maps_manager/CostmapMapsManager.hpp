@@ -91,6 +91,26 @@ public:
    */
   virtual void update(const NavState & nav_state) override;
 
+  /**
+   * @brief Replaces the current static map.
+   *
+   * @param new_map Shared pointer to a new map object. Must be of type Costmap.
+   */
+  void set_static_map(std::shared_ptr<MapsTypeBase> new_map);
+
+  /**
+   * @brief Replaces the current dynamic map.
+   *
+   * @param new_map Shared pointer to a new map object. Must be of type Costmap.
+   */
+  void set_dynamic_map(std::shared_ptr<MapsTypeBase> new_map);
+
+protected:
+  /**
+   * @brief Full path to the map file.
+   */
+  std::string map_path_;
+
 private:
   /**
    * @brief Static costmap representation.
@@ -121,21 +141,6 @@ private:
    * @brief Subscriber for external incoming static map updates.
    */
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr incoming_map_sub_;
-
-  /**
-   * @brief Minimum Z threshold for filtering 3D point data.
-   */
-  double z_min_;
-
-  /**
-   * @brief Maximum Z threshold for filtering 3D point data.
-   */
-  double z_max_;
-
-  /**
-   * @brief Path to the file where the map should be saved.
-   */
-  std::string map_path_;
 };
 
 }  // namespace easynav

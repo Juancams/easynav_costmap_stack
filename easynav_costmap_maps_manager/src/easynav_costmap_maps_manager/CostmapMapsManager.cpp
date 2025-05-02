@@ -41,13 +41,9 @@ CostmapMapsManager::on_initialize()
   std::string package_name, map_path_file;
   node->declare_parameter(plugin_name + ".package", package_name);
   node->declare_parameter(plugin_name + ".map_path_file", map_path_file);
-  node->declare_parameter(plugin_name + ".z_min", z_min_);
-  node->declare_parameter(plugin_name + ".z_max", z_max_);
 
   node->get_parameter(plugin_name + ".package", package_name);
   node->get_parameter(plugin_name + ".map_path_file", map_path_file);
-  node->get_parameter(plugin_name + ".z_min", z_min_);
-  node->get_parameter(plugin_name + ".z_max", z_max_);
 
   nav2_map_server::LoadParameters load_parameters;
 
@@ -66,41 +62,28 @@ CostmapMapsManager::on_initialize()
     } catch (std::exception & ex) {
       return std::unexpected("Error loading map from " + map_path_ + ": " + ex.what());
     }
+
+    nav_msgs::msg::OccupancyGrid map;
+
+    try {
+      nav2_map_server::loadMapFromFile(load_parameters, map);
+    } catch (std::exception & ex) {
+      return std::unexpected("Error loading map from file: " + std::string(ex.what()));
+    }
+
+    auto static_map = std::make_shared<Costmap>(map);
+
+    set_static_map(static_map);
+    set_dynamic_map(static_map);
   }
-
-  nav_msgs::msg::OccupancyGrid map;
-
-  try {
-    nav2_map_server::loadMapFromFile(load_parameters, map);
-  } catch (std::exception & ex) {
-    return std::unexpected("Error loading map from file: " + std::string(ex.what()));
-  }
-
-  static_map_ = std::make_shared<Costmap>(map);
-  dynamic_map_ = std::make_shared<Costmap>(map);
-
-  static_costmap_pub_ = std::make_shared<nav2_costmap_2d::Costmap2DPublisher>(
-    node,
-    static_map_.get(),
-    "map",
-    node->get_name() + std::string("/") + plugin_name + "/map",
-    true);
-
-  dynamic_costmap_pub_ = std::make_shared<nav2_costmap_2d::Costmap2DPublisher>(
-    node,
-    dynamic_map_.get(),
-    "map",
-    node->get_name() + std::string("/") + plugin_name + "/dynamic_map",
-    true);
 
   incoming_map_sub_ = node->create_subscription<nav_msgs::msg::OccupancyGrid>(
     node->get_name() + std::string("/") + plugin_name + "/incoming_map",
     rclcpp::QoS(1).transient_local().reliable(),
     [this](nav_msgs::msg::OccupancyGrid::UniquePtr msg) {
-      static_map_ = std::make_shared<Costmap>(*msg);
-      dynamic_map_ = std::make_shared<Costmap>(*msg);
-
-      static_costmap_pub_->publishCostmap();
+      auto received_map = std::make_shared<Costmap>(*msg);
+      set_static_map(received_map);
+      set_dynamic_map(received_map);
     });
 
   savemap_srv_ = node->create_service<std_srvs::srv::Trigger>(
@@ -119,12 +102,6 @@ CostmapMapsManager::on_initialize()
       }
     });
 
-
-  static_costmap_pub_->on_activate();
-  dynamic_costmap_pub_->on_activate();
-
-  static_costmap_pub_->publishCostmap();
-
   return {};
 }
 
@@ -141,6 +118,49 @@ CostmapMapsManager::get_dynamyc_map()
 }
 
 void
+CostmapMapsManager::set_static_map(std::shared_ptr<MapsTypeBase> new_map)
+{
+  auto typed_ptr = std::dynamic_pointer_cast<Costmap>(new_map);
+  if (!typed_ptr) {
+    RCLCPP_WARN(get_node()->get_logger(),
+      "CostmapMapsManager::set_static_map: pointer is not a Costmap");
+  } else {
+    static_map_ = typed_ptr;
+
+    static_costmap_pub_ = std::make_shared<nav2_costmap_2d::Costmap2DPublisher>(
+      get_node(),
+      static_map_.get(),
+      "map",
+      get_node()->get_name() + std::string("/") + get_plugin_name() + "/map",
+      true);
+
+    static_costmap_pub_->on_activate();
+    static_costmap_pub_->publishCostmap();
+  }
+}
+
+void
+CostmapMapsManager::set_dynamic_map(std::shared_ptr<MapsTypeBase> new_map)
+{
+  auto typed_ptr = std::dynamic_pointer_cast<Costmap>(new_map);
+  if (!typed_ptr) {
+    RCLCPP_WARN(get_node()->get_logger(),
+      "CostmapMapsManager::set_dynamic_map: pointer is not a Costmap");
+  } else {
+    dynamic_map_ = typed_ptr;
+
+    dynamic_costmap_pub_ = std::make_shared<nav2_costmap_2d::Costmap2DPublisher>(
+      get_node(),
+      dynamic_map_.get(),
+      "map",
+      get_node()->get_name() + std::string("/") + get_plugin_name() + "/dynamic_map",
+      true);
+
+    dynamic_costmap_pub_->on_activate();
+  }
+}
+
+void
 CostmapMapsManager::update(const NavState & nav_state)
 {
   std::memcpy(
@@ -151,9 +171,7 @@ CostmapMapsManager::update(const NavState & nav_state)
   for (const auto & sensor : nav_state.perceptions) {
     for (const auto & p : sensor->data) {
       unsigned int mx, my;
-      if (dynamic_map_->worldToMap(p.x, p.y, mx, my) &&
-        p.z >= z_min_ && p.z <= z_max_)
-      {
+      if (dynamic_map_->worldToMap(p.x, p.y, mx, my)) {
         dynamic_map_->setCost(mx, my, nav2_costmap_2d::LETHAL_OBSTACLE);
       }
     }
