@@ -50,6 +50,26 @@ public:
    */
   inline Costmap(const nav_msgs::msg::OccupancyGrid & map)
   : nav2_costmap_2d::Costmap2D(map) {}
+
+
+  /**
+   * @brief Method to get the costmap as an OccupancyGrid message.
+   *
+   * @return The OccupancyGrid representation of the costmap.
+   */
+  nav_msgs::msg::OccupancyGrid to_occupancy_grid() const
+  {
+    nav_msgs::msg::OccupancyGrid grid;
+    grid.header.frame_id = "map";
+    grid.info.resolution = resolution_;
+    grid.info.width = size_x_;
+    grid.info.height = size_y_;
+    grid.info.origin.position.x = origin_x_;
+    grid.info.origin.position.y = origin_y_;
+    grid.data.resize(size_x_ * size_y_);
+    memcpy(grid.data.data(), costmap_, size_x_ * size_y_ * sizeof(unsigned char));
+    return grid;
+  }
 };
 
 }  // namespace easynav

@@ -72,18 +72,21 @@ CostmapMapsManager::on_initialize()
     }
 
     auto static_map = std::make_shared<Costmap>(map);
+    auto dynamic_map = std::make_shared<Costmap>(map);
 
     set_static_map(static_map);
-    set_dynamic_map(static_map);
+    set_dynamic_map(dynamic_map);
   }
 
   incoming_map_sub_ = node->create_subscription<nav_msgs::msg::OccupancyGrid>(
     node->get_name() + std::string("/") + plugin_name + "/incoming_map",
     rclcpp::QoS(1).transient_local().reliable(),
     [this](nav_msgs::msg::OccupancyGrid::UniquePtr msg) {
-      auto received_map = std::make_shared<Costmap>(*msg);
-      set_static_map(received_map);
-      set_dynamic_map(received_map);
+      auto static_received_map = std::make_shared<Costmap>(*msg);
+      auto dynamic_received_map = std::make_shared<Costmap>(*msg);
+
+      set_static_map(static_received_map);
+      set_dynamic_map(dynamic_received_map);
     });
 
   savemap_srv_ = node->create_service<std_srvs::srv::Trigger>(
@@ -105,16 +108,14 @@ CostmapMapsManager::on_initialize()
   return {};
 }
 
-std::shared_ptr<MapsTypeBase>
-CostmapMapsManager::get_static_map()
+std::map<std::string, std::shared_ptr<MapsTypeBase>>
+CostmapMapsManager::get_maps()
 {
-  return static_map_;
-}
+  std::map<std::string, std::shared_ptr<MapsTypeBase>> ret;
+  ret["costmap.static"] = static_map_;
+  ret["costmap.dynamic"] = dynamic_map_;
 
-std::shared_ptr<MapsTypeBase>
-CostmapMapsManager::get_dynamyc_map()
-{
-  return dynamic_map_;
+  return ret;
 }
 
 void
@@ -168,12 +169,16 @@ CostmapMapsManager::update(const NavState & nav_state)
     static_map_->getCharMap(),
     static_map_->getSizeInCellsX() * static_map_->getSizeInCellsY());
 
-  for (const auto & sensor : nav_state.perceptions) {
-    for (const auto & p : sensor->data) {
-      unsigned int mx, my;
-      if (dynamic_map_->worldToMap(p.x, p.y, mx, my)) {
-        dynamic_map_->setCost(mx, my, nav2_costmap_2d::LETHAL_OBSTACLE);
-      }
+  auto fused = PerceptionsOpsView(nav_state.perceptions)
+    .downsample(static_map_->getResolution())
+    .fuse("map")
+    ->filter({NAN, NAN, 0.1}, {NAN, NAN, NAN})
+    .as_points(0);
+
+  for (const auto & p : fused) {
+    unsigned int mx, my;
+    if (dynamic_map_->worldToMap(p.x, p.y, mx, my)) {
+      dynamic_map_->setCost(mx, my, nav2_costmap_2d::LETHAL_OBSTACLE);
     }
   }
 

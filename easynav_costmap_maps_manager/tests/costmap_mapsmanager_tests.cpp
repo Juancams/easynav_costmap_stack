@@ -22,10 +22,12 @@
 
 #include "easynav_costmap_maps_manager/CostmapMapsManager.hpp"
 #include "easynav_costmap_maps_manager/Costmap.hpp"
+#include "easynav_common/RTTFBuffer.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "nav2_costmap_2d/cost_values.hpp"
+#include "tf2_ros/transform_listener.h"
 
 using easynav::CostmapMapsManager;
 using easynav::Costmap;
@@ -80,11 +82,11 @@ TEST_F(CostmapMapsManagerTest, SetAndGetMap)
   manager->set_static_map(static_map);
   manager->set_dynamic_map(static_map);
 
-  auto st_map = std::dynamic_pointer_cast<Costmap>(manager->get_static_map());
+  auto st_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap.static"));
   ASSERT_TRUE(st_map != nullptr);
   EXPECT_NEAR(st_map->getResolution(), 0.1, 1e-3);
 
-  auto dyn_map = std::dynamic_pointer_cast<Costmap>(manager->get_dynamyc_map());
+  auto dyn_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap.dynamic"));
   ASSERT_TRUE(dyn_map != nullptr);
   EXPECT_NEAR(dyn_map->getResolution(), 0.1, 1e-3);
 }
@@ -92,6 +94,8 @@ TEST_F(CostmapMapsManagerTest, SetAndGetMap)
 TEST_F(CostmapMapsManagerTest, DynamicUpdateModifiesDynamicMap)
 {
   auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("costmap_node3");
+  auto tf_buffer = easynav::RTTFBuffer::getInstance(node->get_clock());
+  tf2_ros::TransformListener tf_listener(*tf_buffer, node, true);
   auto manager = std::make_shared<CostmapMapsManager>();
   manager->initialize(node, "test");
 
@@ -130,7 +134,7 @@ TEST_F(CostmapMapsManagerTest, DynamicUpdateModifiesDynamicMap)
 
   manager->update(navstate);
 
-  auto dyn_map = std::dynamic_pointer_cast<Costmap>(manager->get_dynamyc_map());
+  auto dyn_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap.dynamic"));
   ASSERT_TRUE(dyn_map != nullptr);
 
   unsigned int mx, my;
@@ -176,7 +180,7 @@ TEST_F(CostmapMapsManagerTest, IncomingOccupancyGridUpdatesMaps)
   executor.spin_some();
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  auto static_map = std::dynamic_pointer_cast<Costmap>(manager->get_static_map());
+  auto static_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap.static"));
   ASSERT_TRUE(static_map != nullptr);
 
   EXPECT_EQ(static_map->getCost(5, 5), nav2_costmap_2d::LETHAL_OBSTACLE);

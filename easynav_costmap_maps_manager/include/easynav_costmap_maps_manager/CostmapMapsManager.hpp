@@ -64,22 +64,11 @@ public:
   virtual std::expected<void, std::string> on_initialize() override;
 
   /**
-   * @brief Get the current static map.
+   * @brief Returns the current static map.
    *
-   * Returns the latest static map generated or stored by the manager.
-   *
-   * @return A shared pointer to the static map.
+   * @return Shared pointer to the static SimpleMap instance.
    */
-  [[nodiscard]] virtual std::shared_ptr<MapsTypeBase> get_static_map() override;
-
-  /**
-   * @brief Get the current dynamic map.
-   *
-   * Returns the latest dynamic map generated from the latest perceptions.
-   *
-   * @return A shared pointer to the dynamic map.
-   */
-  [[nodiscard]] virtual std::shared_ptr<MapsTypeBase> get_dynamyc_map() override;
+  [[nodiscard]] virtual std::map<std::string, std::shared_ptr<MapsTypeBase>> get_maps() override;
 
   /**
    * @brief Updates the map based on the current navigation state.
