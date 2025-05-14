@@ -49,7 +49,8 @@ public:
    *
    * @param parent_node The parent lifecycle node used for initialization.
    */
-  AmclProxy(const rclcpp_lifecycle::LifecycleNode::SharedPtr & parent_node, 
+  AmclProxy(
+    const rclcpp_lifecycle::LifecycleNode::SharedPtr & parent_node,
     const std::string & plugin_name);
 
   /**
