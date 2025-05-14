@@ -25,59 +25,60 @@
 namespace easynav
 {
 
-AmclProxy::AmclProxy(const rclcpp_lifecycle::LifecycleNode::SharedPtr & parent_node)
-: nav2_amcl::AmclNode(rclcpp::NodeOptions{}), parent_node_(parent_node)
+AmclProxy::AmclProxy(const rclcpp_lifecycle::LifecycleNode::SharedPtr & parent_node, const
+  std::string & plugin_name)
+: nav2_amcl::AmclNode(rclcpp::NodeOptions{}), parent_node_(parent_node), plugin_name_(plugin_name)
 {
-  parent_node_->declare_parameter("alpha1", rclcpp::ParameterValue(0.2));
-  parent_node_->declare_parameter("alpha2", rclcpp::ParameterValue(0.2));
-  parent_node_->declare_parameter("alpha3", rclcpp::ParameterValue(0.2));
-  parent_node_->declare_parameter("alpha4", rclcpp::ParameterValue(0.2));
-  parent_node_->declare_parameter("alpha5", rclcpp::ParameterValue(0.2));
-  parent_node_->declare_parameter("base_frame_id",
+  parent_node_->declare_parameter(plugin_name_ + ".alpha1", rclcpp::ParameterValue(0.2));
+  parent_node_->declare_parameter(plugin_name_ + ".alpha2", rclcpp::ParameterValue(0.2));
+  parent_node_->declare_parameter(plugin_name_ + ".alpha3", rclcpp::ParameterValue(0.2));
+  parent_node_->declare_parameter(plugin_name_ + ".alpha4", rclcpp::ParameterValue(0.2));
+  parent_node_->declare_parameter(plugin_name_ + ".alpha5", rclcpp::ParameterValue(0.2));
+  parent_node_->declare_parameter(plugin_name_ + ".base_frame_id",
       rclcpp::ParameterValue(std::string("base_footprint")));
 
-  parent_node_->declare_parameter("beam_skip_distance", rclcpp::ParameterValue(0.5));
-  parent_node_->declare_parameter("beam_skip_error_threshold", rclcpp::ParameterValue(0.9));
-  parent_node_->declare_parameter("beam_skip_threshold", rclcpp::ParameterValue(0.3));
-  parent_node_->declare_parameter("do_beamskip", rclcpp::ParameterValue(false));
-  parent_node_->declare_parameter("global_frame_id", rclcpp::ParameterValue(std::string("map")));
-  parent_node_->declare_parameter("lambda_short", rclcpp::ParameterValue(0.1));
-  parent_node_->declare_parameter("laser_likelihood_max_dist", rclcpp::ParameterValue(2.0));
-  parent_node_->declare_parameter("laser_max_range", rclcpp::ParameterValue(100.0));
-  parent_node_->declare_parameter("laser_min_range", rclcpp::ParameterValue(-1.0));
-  parent_node_->declare_parameter("laser_model_type",
+  parent_node_->declare_parameter(plugin_name_ + ".beam_skip_distance", rclcpp::ParameterValue(0.5));
+  parent_node_->declare_parameter(plugin_name_ + ".beam_skip_error_threshold", rclcpp::ParameterValue(0.9));
+  parent_node_->declare_parameter(plugin_name_ + ".beam_skip_threshold", rclcpp::ParameterValue(0.3));
+  parent_node_->declare_parameter(plugin_name_ + ".do_beamskip", rclcpp::ParameterValue(false));
+  parent_node_->declare_parameter(plugin_name_ + ".global_frame_id", rclcpp::ParameterValue(std::string("map")));
+  parent_node_->declare_parameter(plugin_name_ + ".lambda_short", rclcpp::ParameterValue(0.1));
+  parent_node_->declare_parameter(plugin_name_ + ".laser_likelihood_max_dist", rclcpp::ParameterValue(2.0));
+  parent_node_->declare_parameter(plugin_name_ + ".laser_max_range", rclcpp::ParameterValue(100.0));
+  parent_node_->declare_parameter(plugin_name_ + ".laser_min_range", rclcpp::ParameterValue(-1.0));
+  parent_node_->declare_parameter(plugin_name_ + ".laser_model_type",
       rclcpp::ParameterValue(std::string("likelihood_field")));
 
-  parent_node_->declare_parameter("set_initial_pose", rclcpp::ParameterValue(false));
-  parent_node_->declare_parameter("initial_pose.x", rclcpp::ParameterValue(0.0));
-  parent_node_->declare_parameter("initial_pose.y", rclcpp::ParameterValue(0.0));
-  parent_node_->declare_parameter("initial_pose.z", rclcpp::ParameterValue(0.0));
-  parent_node_->declare_parameter("initial_pose.yaw", rclcpp::ParameterValue(0.0));
-  parent_node_->declare_parameter("max_beams", rclcpp::ParameterValue(60));
-  parent_node_->declare_parameter("max_particles", rclcpp::ParameterValue(2000));
-  parent_node_->declare_parameter("min_particles", rclcpp::ParameterValue(500));
-  parent_node_->declare_parameter("odom_frame_id", rclcpp::ParameterValue(std::string("odom")));
-  parent_node_->declare_parameter("pf_err", rclcpp::ParameterValue(0.05));
-  parent_node_->declare_parameter("pf_z", rclcpp::ParameterValue(0.99));
-  parent_node_->declare_parameter("recovery_alpha_fast", rclcpp::ParameterValue(0.0));
-  parent_node_->declare_parameter("recovery_alpha_slow", rclcpp::ParameterValue(0.0));
-  parent_node_->declare_parameter("resample_interval", rclcpp::ParameterValue(1));
-  parent_node_->declare_parameter("robot_model_type",
+  parent_node_->declare_parameter(plugin_name_ + ".set_initial_pose", rclcpp::ParameterValue(false));
+  parent_node_->declare_parameter(plugin_name_ + ".initial_pose.x", rclcpp::ParameterValue(0.0));
+  parent_node_->declare_parameter(plugin_name_ + ".initial_pose.y", rclcpp::ParameterValue(0.0));
+  parent_node_->declare_parameter(plugin_name_ + ".initial_pose.z", rclcpp::ParameterValue(0.0));
+  parent_node_->declare_parameter(plugin_name_ + ".initial_pose.yaw", rclcpp::ParameterValue(0.0));
+  parent_node_->declare_parameter(plugin_name_ + ".max_beams", rclcpp::ParameterValue(60));
+  parent_node_->declare_parameter(plugin_name_ + ".max_particles", rclcpp::ParameterValue(2000));
+  parent_node_->declare_parameter(plugin_name_ + ".min_particles", rclcpp::ParameterValue(500));
+  parent_node_->declare_parameter(plugin_name_ + ".odom_frame_id", rclcpp::ParameterValue(std::string("odom")));
+  parent_node_->declare_parameter(plugin_name_ + ".pf_err", rclcpp::ParameterValue(0.05));
+  parent_node_->declare_parameter(plugin_name_ + ".pf_z", rclcpp::ParameterValue(0.99));
+  parent_node_->declare_parameter(plugin_name_ + ".recovery_alpha_fast", rclcpp::ParameterValue(0.0));
+  parent_node_->declare_parameter(plugin_name_ + ".recovery_alpha_slow", rclcpp::ParameterValue(0.0));
+  parent_node_->declare_parameter(plugin_name_ + ".resample_interval", rclcpp::ParameterValue(1));
+  parent_node_->declare_parameter(plugin_name_ + ".robot_model_type",
       rclcpp::ParameterValue("nav2_amcl::DifferentialMotionModel"));
 
-  parent_node_->declare_parameter("save_pose_rate", rclcpp::ParameterValue(0.5));
-  parent_node_->declare_parameter("sigma_hit", rclcpp::ParameterValue(0.2));
-  parent_node_->declare_parameter("tf_broadcast", rclcpp::ParameterValue(true));
-  parent_node_->declare_parameter("transform_tolerance", rclcpp::ParameterValue(1.0));
-  parent_node_->declare_parameter("update_min_a", rclcpp::ParameterValue(0.2));
-  parent_node_->declare_parameter("update_min_d", rclcpp::ParameterValue(0.25));
-  parent_node_->declare_parameter("z_hit", rclcpp::ParameterValue(0.5));
-  parent_node_->declare_parameter("z_max", rclcpp::ParameterValue(0.05));
-  parent_node_->declare_parameter("z_rand", rclcpp::ParameterValue(0.5));
-  parent_node_->declare_parameter("z_short", rclcpp::ParameterValue(0.05));
-  parent_node_->declare_parameter("always_reset_initial_pose", rclcpp::ParameterValue(false));
-  parent_node_->declare_parameter("first_map_only", rclcpp::ParameterValue(false));
-  parent_node_->declare_parameter("freespace_downsampling", rclcpp::ParameterValue(false));
+  parent_node_->declare_parameter(plugin_name_ + ".save_pose_rate", rclcpp::ParameterValue(0.5));
+  parent_node_->declare_parameter(plugin_name_ + ".sigma_hit", rclcpp::ParameterValue(0.2));
+  parent_node_->declare_parameter(plugin_name_ + ".tf_broadcast", rclcpp::ParameterValue(true));
+  parent_node_->declare_parameter(plugin_name_ + ".transform_tolerance", rclcpp::ParameterValue(1.0));
+  parent_node_->declare_parameter(plugin_name_ + ".update_min_a", rclcpp::ParameterValue(0.2));
+  parent_node_->declare_parameter(plugin_name_ + ".update_min_d", rclcpp::ParameterValue(0.25));
+  parent_node_->declare_parameter(plugin_name_ + ".z_hit", rclcpp::ParameterValue(0.5));
+  parent_node_->declare_parameter(plugin_name_ + ".z_max", rclcpp::ParameterValue(0.05));
+  parent_node_->declare_parameter(plugin_name_ + ".z_rand", rclcpp::ParameterValue(0.5));
+  parent_node_->declare_parameter(plugin_name_ + ".z_short", rclcpp::ParameterValue(0.05));
+  parent_node_->declare_parameter(plugin_name_ + ".always_reset_initial_pose", rclcpp::ParameterValue(false));
+  parent_node_->declare_parameter(plugin_name_ + ".first_map_only", rclcpp::ParameterValue(false));
+  parent_node_->declare_parameter(plugin_name_ + ".freespace_downsampling", rclcpp::ParameterValue(false));
 }
 
 void
@@ -86,52 +87,50 @@ AmclProxy::init_parameters()
   double save_pose_rate;
   double tmp_tol;
 
-  parent_node_->get_parameter("alpha1", alpha1_);
-  parent_node_->get_parameter("alpha2", alpha2_);
-  parent_node_->get_parameter("alpha3", alpha3_);
-  parent_node_->get_parameter("alpha4", alpha4_);
-  parent_node_->get_parameter("alpha5", alpha5_);
-  parent_node_->get_parameter("base_frame_id", base_frame_id_);
-  parent_node_->get_parameter("beam_skip_distance", beam_skip_distance_);
-  parent_node_->get_parameter("beam_skip_error_threshold", beam_skip_error_threshold_);
-  parent_node_->get_parameter("beam_skip_threshold", beam_skip_threshold_);
-  parent_node_->get_parameter("do_beamskip", do_beamskip_);
-  parent_node_->get_parameter("global_frame_id", global_frame_id_);
-  parent_node_->get_parameter("lambda_short", lambda_short_);
-  parent_node_->get_parameter("laser_likelihood_max_dist", laser_likelihood_max_dist_);
-  parent_node_->get_parameter("laser_max_range", laser_max_range_);
-  parent_node_->get_parameter("laser_min_range", laser_min_range_);
-  parent_node_->get_parameter("laser_model_type", sensor_model_type_);
-  parent_node_->get_parameter("set_initial_pose", set_initial_pose_);
-  parent_node_->get_parameter("initial_pose.x", initial_pose_x_);
-  parent_node_->get_parameter("initial_pose.y", initial_pose_y_);
-  parent_node_->get_parameter("initial_pose.z", initial_pose_z_);
-  parent_node_->get_parameter("initial_pose.yaw", initial_pose_yaw_);
-  parent_node_->get_parameter("max_beams", max_beams_);
-  parent_node_->get_parameter("max_particles", max_particles_);
-  parent_node_->get_parameter("min_particles", min_particles_);
-  parent_node_->get_parameter("odom_frame_id", odom_frame_id_);
-  parent_node_->get_parameter("pf_err", pf_err_);
-  parent_node_->get_parameter("pf_z", pf_z_);
-  parent_node_->get_parameter("recovery_alpha_fast", alpha_fast_);
-  parent_node_->get_parameter("recovery_alpha_slow", alpha_slow_);
-  parent_node_->get_parameter("resample_interval", resample_interval_);
-  parent_node_->get_parameter("robot_model_type", robot_model_type_);
-  parent_node_->get_parameter("save_pose_rate", save_pose_rate);
-  parent_node_->get_parameter("sigma_hit", sigma_hit_);
-  parent_node_->get_parameter("tf_broadcast", tf_broadcast_);
-  parent_node_->get_parameter("transform_tolerance", tmp_tol);
-  parent_node_->get_parameter("update_min_a", a_thresh_);
-  parent_node_->get_parameter("update_min_d", d_thresh_);
-  parent_node_->get_parameter("z_hit", z_hit_);
-  parent_node_->get_parameter("z_max", z_max_);
-  parent_node_->get_parameter("z_rand", z_rand_);
-  parent_node_->get_parameter("z_short", z_short_);
-  parent_node_->get_parameter("first_map_only", first_map_only_);
-  parent_node_->get_parameter("always_reset_initial_pose", always_reset_initial_pose_);
-  parent_node_->get_parameter("scan_topic", scan_topic_);
-  parent_node_->get_parameter("map_topic", map_topic_);
-  parent_node_->get_parameter("freespace_downsampling", freespace_downsampling_);
+  parent_node_->get_parameter(plugin_name_ + ".alpha1", alpha1_);
+  parent_node_->get_parameter(plugin_name_ + ".alpha2", alpha2_);
+  parent_node_->get_parameter(plugin_name_ + ".alpha3", alpha3_);
+  parent_node_->get_parameter(plugin_name_ + ".alpha4", alpha4_);
+  parent_node_->get_parameter(plugin_name_ + ".alpha5", alpha5_);
+  parent_node_->get_parameter(plugin_name_ + ".base_frame_id", base_frame_id_);
+  parent_node_->get_parameter(plugin_name_ + ".beam_skip_distance", beam_skip_distance_);
+  parent_node_->get_parameter(plugin_name_ + ".beam_skip_error_threshold", beam_skip_error_threshold_);
+  parent_node_->get_parameter(plugin_name_ + ".beam_skip_threshold", beam_skip_threshold_);
+  parent_node_->get_parameter(plugin_name_ + ".do_beamskip", do_beamskip_);
+  parent_node_->get_parameter(plugin_name_ + ".global_frame_id", global_frame_id_);
+  parent_node_->get_parameter(plugin_name_ + ".lambda_short", lambda_short_);
+  parent_node_->get_parameter(plugin_name_ + ".laser_likelihood_max_dist", laser_likelihood_max_dist_);
+  parent_node_->get_parameter(plugin_name_ + ".laser_max_range", laser_max_range_);
+  parent_node_->get_parameter(plugin_name_ + ".laser_min_range", laser_min_range_);
+  parent_node_->get_parameter(plugin_name_ + ".laser_model_type", sensor_model_type_);
+  parent_node_->get_parameter(plugin_name_ + ".set_initial_pose", set_initial_pose_);
+  parent_node_->get_parameter(plugin_name_ + ".initial_pose.x", initial_pose_x_);
+  parent_node_->get_parameter(plugin_name_ + ".initial_pose.y", initial_pose_y_);
+  parent_node_->get_parameter(plugin_name_ + ".initial_pose.z", initial_pose_z_);
+  parent_node_->get_parameter(plugin_name_ + ".initial_pose.yaw", initial_pose_yaw_);
+  parent_node_->get_parameter(plugin_name_ + ".max_beams", max_beams_);
+  parent_node_->get_parameter(plugin_name_ + ".max_particles", max_particles_);
+  parent_node_->get_parameter(plugin_name_ + ".min_particles", min_particles_);
+  parent_node_->get_parameter(plugin_name_ + ".odom_frame_id", odom_frame_id_);
+  parent_node_->get_parameter(plugin_name_ + ".pf_err", pf_err_);
+  parent_node_->get_parameter(plugin_name_ + ".pf_z", pf_z_);
+  parent_node_->get_parameter(plugin_name_ + ".recovery_alpha_fast", alpha_fast_);
+  parent_node_->get_parameter(plugin_name_ + ".recovery_alpha_slow", alpha_slow_);
+  parent_node_->get_parameter(plugin_name_ + ".resample_interval", resample_interval_);
+  parent_node_->get_parameter(plugin_name_ + ".robot_model_type", robot_model_type_);
+  parent_node_->get_parameter(plugin_name_ + ".save_pose_rate", save_pose_rate);
+  parent_node_->get_parameter(plugin_name_ + ".sigma_hit", sigma_hit_);
+  parent_node_->get_parameter(plugin_name_ + ".tf_broadcast", tf_broadcast_);
+  parent_node_->get_parameter(plugin_name_ + ".transform_tolerance", tmp_tol);
+  parent_node_->get_parameter(plugin_name_ + ".update_min_a", a_thresh_);
+  parent_node_->get_parameter(plugin_name_ + ".update_min_d", d_thresh_);
+  parent_node_->get_parameter(plugin_name_ + ".z_hit", z_hit_);
+  parent_node_->get_parameter(plugin_name_ + ".z_max", z_max_);
+  parent_node_->get_parameter(plugin_name_ + ".z_rand", z_rand_);
+  parent_node_->get_parameter(plugin_name_ + ".z_short", z_short_);
+  parent_node_->get_parameter(plugin_name_ + ".first_map_only", first_map_only_);
+  parent_node_->get_parameter(plugin_name_ + ".always_reset_initial_pose", always_reset_initial_pose_);
+  parent_node_->get_parameter(plugin_name_ + ".freespace_downsampling", freespace_downsampling_);
 
   save_pose_period_ = tf2::durationFromSec(1.0 / save_pose_rate);
   transform_tolerance_ = tf2::durationFromSec(tmp_tol);

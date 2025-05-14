@@ -29,7 +29,7 @@ namespace easynav
 std::expected<void, std::string>
 AmclMethod::on_initialize()
 {
-  amcl_proxy = std::make_shared<AmclProxy>(get_node());
+  amcl_proxy = std::make_shared<AmclProxy>(get_node(), get_plugin_name());
   amcl_proxy->initialize();
 
   initial_pose_sub_ =

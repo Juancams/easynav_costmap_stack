@@ -49,7 +49,8 @@ public:
    *
    * @param parent_node The parent lifecycle node used for initialization.
    */
-  AmclProxy(const rclcpp_lifecycle::LifecycleNode::SharedPtr & parent_node);
+  AmclProxy(const rclcpp_lifecycle::LifecycleNode::SharedPtr & parent_node, 
+    const std::string & plugin_name);
 
   /**
    * @brief Default destructor.
@@ -152,6 +153,11 @@ private:
    * @brief Reference to the parent lifecycle node.
    */
   rclcpp_lifecycle::LifecycleNode::SharedPtr parent_node_;
+
+  /**
+   * @brief Name of the plugin used for AMCL.
+   */
+  std::string plugin_name_;
 };
 
 }  // namespace easynav
