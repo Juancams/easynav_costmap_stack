@@ -1,9 +1,0 @@
-<class_libraries>
-  <library path="easynav_costmap_controller">
-    <class name="easynav_costmap_controller/CostmapController"  type="easynav::CostmapController" base_class_type="easynav::ControllerMethodBase">
-      <description>
-      Easy Navigation Costmap Controller.
-      </description>
-    </class>
-  </library>
-</class_libraries>

@@ -1,0 +1,9 @@
+<class_libraries>
+  <library path="easynav_nav2_costmap_maps_manager">
+    <class name="easynav_nav2_costmap_maps_manager/CostmapMapsManager"  type="easynav::CostmapMapsManager" base_class_type="easynav::MapsManagerBase">
+      <description>
+      Costmap implementation for the Maps Manager.
+      </description>
+    </class>
+  </library>
+</class_libraries>
