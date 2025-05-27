@@ -56,7 +56,7 @@ AMCLLocalizer::update(const NavState & nav_state)
 {
   if (!map_) {
     try {
-      map_ = std::dynamic_pointer_cast<Costmap>(nav_state.maps.at("costmap.static"));
+      map_ = std::dynamic_pointer_cast<Costmap>(nav_state.maps.at("costmap"));
       auto occ_grid_map = map_->to_occupancy_grid();
       amcl_proxy->set_map(std::make_shared<nav_msgs::msg::OccupancyGrid>(occ_grid_map));
 

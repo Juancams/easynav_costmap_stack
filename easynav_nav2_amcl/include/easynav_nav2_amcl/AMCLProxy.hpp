@@ -159,6 +159,11 @@ private:
    * @brief Name of the plugin used for AMCL.
    */
   std::string plugin_name_;
+
+  /**
+   * @brief Flag indicating whether the initial pose is known.
+   */
+  bool initial_pose_received_{false};
 };
 
 }  // namespace easynav

@@ -214,6 +214,7 @@ void AMCLProxy::initialize()
     rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
 
   first_pose_sent_ = false;
+  initial_pose_received_ = false;
   active_ = true;
 }
 
@@ -230,6 +231,8 @@ void AMCLProxy::on_initial_pose_received(
     init_pose_received_on_inactive = true;
     last_published_pose_ = *msg;
   }
+
+  initial_pose_received_ = true;
 }
 
 void AMCLProxy::set_map(
@@ -310,6 +313,7 @@ void AMCLProxy::predict(
 
 void AMCLProxy::correct(nav_msgs::msg::Odometry & odom_msg)
 {
+  if (!initial_pose_received_) { return;}
   bool resampled = false;
 
   // If the robot has moved, update the filter
@@ -333,6 +337,8 @@ void AMCLProxy::correct(nav_msgs::msg::Odometry & odom_msg)
     }
   }
 
+  odom_msg.header.stamp = scan_->header.stamp;
+
   if (resampled || force_publication_ || !first_pose_sent_) {
     amcl_hyp_t max_weight_hyps;
     std::vector<amcl_hyp_t> hyps;
@@ -345,7 +351,6 @@ void AMCLProxy::correct(nav_msgs::msg::Odometry & odom_msg)
       publishAmclPose(scan_, hyps, max_weight_hyp);
       calculateMaptoOdomTransform(scan_, hyps, max_weight_hyp);
 
-      odom_msg.header.stamp = scan_->header.stamp;
       odom_msg.header.frame_id = "map";
       odom_msg.child_frame_id = "odom";
 
