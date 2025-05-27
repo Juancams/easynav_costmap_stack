@@ -313,7 +313,7 @@ void AMCLProxy::predict(
 
 void AMCLProxy::correct(nav_msgs::msg::Odometry & odom_msg)
 {
-  if (!initial_pose_received_) { return;}
+  if (!initial_pose_received_) {return;}
   bool resampled = false;
 
   // If the robot has moved, update the filter
