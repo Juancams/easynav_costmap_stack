@@ -79,77 +79,11 @@ TEST_F(CostmapMapsManagerTest, SetAndGetMap)
 
   nav_msgs::msg::OccupancyGrid map = createOccupancyGrid(10, 10, 0.1, 0.0, 0.0);
   auto static_map = std::make_shared<Costmap>(map);
-  manager->set_static_map(static_map);
-  manager->set_dynamic_map(static_map);
+  manager->set_map(static_map);
 
-  auto st_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap.static"));
+  auto st_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap"));
   ASSERT_TRUE(st_map != nullptr);
   EXPECT_NEAR(st_map->getResolution(), 0.1, 1e-3);
-
-  auto dyn_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap.dynamic"));
-  ASSERT_TRUE(dyn_map != nullptr);
-  EXPECT_NEAR(dyn_map->getResolution(), 0.1, 1e-3);
-}
-
-TEST_F(CostmapMapsManagerTest, DynamicUpdateModifiesDynamicMap)
-{
-  auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("costmap_node3");
-  auto tf_buffer = easynav::RTTFBuffer::getInstance(node->get_clock());
-  tf2_ros::TransformListener tf_listener(*tf_buffer, node, true);
-  auto manager = std::make_shared<CostmapMapsManager>();
-  manager->initialize(node, "test");
-
-  nav_msgs::msg::OccupancyGrid map = createOccupancyGrid(30, 30, 0.1, -1.5, -1.5);
-  auto static_map = std::make_shared<Costmap>(map);
-  manager->set_static_map(static_map);
-  manager->set_dynamic_map(static_map);
-
-  easynav::NavState navstate;
-  auto perception = std::make_shared<easynav::Perception>();
-
-  perception->data.points.resize(6);
-  perception->data.points[0].x = 1.0;
-  perception->data.points[0].y = 1.0;
-  perception->data.points[0].z = 0.2;
-  perception->data.points[1].x = -1.0;
-  perception->data.points[1].y = -1.0;
-  perception->data.points[1].z = 0.2;
-  perception->data.points[2].x = -10.0;
-  perception->data.points[2].y = -1.0;
-  perception->data.points[2].z = 0.2;
-  perception->data.points[3].x = 10.0;
-  perception->data.points[3].y = -1.0;
-  perception->data.points[3].z = 0.2;
-  perception->data.points[4].x = 1.0;
-  perception->data.points[4].y = -10.0;
-  perception->data.points[4].z = 0.2;
-  perception->data.points[5].x = 1.0;
-  perception->data.points[5].y = 10.0;
-  perception->data.points[5].z = 0.2;
-
-  perception->stamp = rclcpp::Time(0);
-  perception->frame_id = "map";
-  perception->valid = true;
-  navstate.perceptions.push_back(perception);
-
-  manager->update(navstate);
-
-  auto dyn_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap.dynamic"));
-  ASSERT_TRUE(dyn_map != nullptr);
-
-  unsigned int mx, my;
-  bool found = dyn_map->worldToMap(1.0, 1.0, mx, my);
-  ASSERT_TRUE(found);
-  EXPECT_EQ(dyn_map->getCost(mx, my), nav2_costmap_2d::LETHAL_OBSTACLE);
-
-  found = dyn_map->worldToMap(-1.0, -1.0, mx, my);
-  ASSERT_TRUE(found);
-  EXPECT_EQ(dyn_map->getCost(mx, my), nav2_costmap_2d::LETHAL_OBSTACLE);
-
-  EXPECT_FALSE(dyn_map->worldToMap(-10.0, -1.0, mx, my));
-  EXPECT_FALSE(dyn_map->worldToMap(10.0, -1.0, mx, my));
-  EXPECT_FALSE(dyn_map->worldToMap(1.0, -10.0, mx, my));
-  EXPECT_FALSE(dyn_map->worldToMap(1.0, 10.0, mx, my));
 }
 
 TEST_F(CostmapMapsManagerTest, IncomingOccupancyGridUpdatesMaps)
@@ -180,7 +114,7 @@ TEST_F(CostmapMapsManagerTest, IncomingOccupancyGridUpdatesMaps)
   executor.spin_some();
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  auto static_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap.static"));
+  auto static_map = std::dynamic_pointer_cast<Costmap>(manager->get_maps().at("costmap"));
   ASSERT_TRUE(static_map != nullptr);
 
   EXPECT_EQ(static_map->getCost(5, 5), nav2_costmap_2d::LETHAL_OBSTACLE);
@@ -208,7 +142,7 @@ TEST_F(CostmapMapsManagerTest, SavemapServiceWorks)
     map->setCost(1, 1, nav2_costmap_2d::LETHAL_OBSTACLE);
     map->setCost(2, 2, nav2_costmap_2d::LETHAL_OBSTACLE);
 
-    manager->set_static_map(map);
+    manager->set_map(map);
 
     const std::string test_map_file = "/tmp/costmap_saved.pgm";
     const std::string service_name = "/costmap_savemap_node/save/savemap";
