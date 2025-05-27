@@ -56,7 +56,10 @@ std::expected<void, std::string> CostmapController::on_initialize()
   }
 
   costmap_ros_ = std::make_shared<nav2_costmap_2d::Costmap2DROS>(
-    "global_costmap", node->get_namespace(), node->get_parameter("use_sim_time").as_bool());
+    "local_costmap", node->get_namespace(), node->get_parameter("use_sim_time").as_bool());
+
+  costmap_thread_ = std::make_unique<nav2_util::NodeThread>(costmap_ros_);
+
   costmap_ros_->configure();
 
   progress_checker_loader_ =
@@ -91,7 +94,6 @@ std::expected<void, std::string> CostmapController::on_initialize()
         ". Error: " +
         ex.what());
   }
-
 
   std::string goal_checker_plugin_name;
   const std::string goal_checker_plugin_param_name = plugin_name + "." + goal_checker_plugin +
@@ -146,36 +148,13 @@ geometry_msgs::msg::TwistStamped CostmapController::get_cmd_vel()
 
 void CostmapController::update_rt(const NavState & nav_state)
 {
-
-  auto path = nav_state.path;
-
-  if (path.poses.empty()) {
-    RCLCPP_WARN(get_node()->get_logger(), "Path is empty");
-    return;
+  if (!costmap_activated_) {
+    costmap_ros_->activate();
+    costmap_activated_ = true;
   }
 
-  std::shared_ptr<Costmap> map_;
-  try {
-    map_ = std::dynamic_pointer_cast<Costmap>(nav_state.maps.at("costmap.dynamic"));
-
-  } catch (const std::out_of_range & e) {
+  if (nav_state.path.poses.empty()) {
     return;
-  }
-
-  auto * dest = costmap_ros_->getCostmap();
-
-  dest->resizeMap(
-    map_->getSizeInCellsX(),
-    map_->getSizeInCellsY(),
-    map_->getResolution(),
-    map_->getOriginX(),
-    map_->getOriginY()
-  );
-
-  for (unsigned int y = 0; y < map_->getSizeInCellsY(); ++y) {
-    for (unsigned int x = 0; x < map_->getSizeInCellsX(); ++x) {
-      dest->setCost(x, y, map_->getCost(x, y));
-    }
   }
 
   geometry_msgs::msg::PoseStamped current;
@@ -188,7 +167,7 @@ void CostmapController::update_rt(const NavState & nav_state)
   twist.linear.y = nav_state.odom.twist.twist.linear.y;
   twist.angular.z = nav_state.odom.twist.twist.angular.z;
 
-  controller_->setPlan(path);
+  controller_->setPlan(nav_state.path);
   cmd_vel_ = controller_->computeVelocityCommands(current, twist,
       goal_checker_.get());
   cmd_vel_.header.stamp = nav_state.odom.header.stamp;

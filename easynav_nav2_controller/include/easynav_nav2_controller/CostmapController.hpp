@@ -123,6 +123,16 @@ private:
    * @brief Pointer to the costmap ros instance.
    */
   std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_ {};
+
+  /**
+   * @brief Thread for the costmap node.
+   */
+  std::unique_ptr<nav2_util::NodeThread> costmap_thread_;
+
+  /**
+   * @brief Flag indicating whether the static map has been activated.
+   */
+  bool costmap_activated_ {false};
 };
 
 }  // namespace easynav

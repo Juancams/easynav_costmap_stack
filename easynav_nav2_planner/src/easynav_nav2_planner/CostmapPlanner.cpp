@@ -40,6 +40,8 @@ std::expected<void, std::string> CostmapPlanner::on_initialize()
 
   costmap_ros_->configure();
 
+  costmap_thread_ = std::make_unique<nav2_util::NodeThread>(costmap_ros_);
+
   costmap_planner_loader_ = std::make_unique<pluginlib::ClassLoader<nav2_core::GlobalPlanner>>(
     "nav2_core", "nav2_core::GlobalPlanner");
 
@@ -80,52 +82,35 @@ nav_msgs::msg::Path CostmapPlanner::get_path()
 
 void CostmapPlanner::update(const NavState & nav_state)
 {
-  if (planner_ == nullptr) {
-    RCLCPP_WARN(get_node()->get_logger(), "Planner is not initialized");
+  if (planner_ == nullptr || nav_state.odom.header.frame_id == "") {
     return;
   }
 
-  std::shared_ptr<Costmap> map_;
-  try {
-    map_ = std::dynamic_pointer_cast<Costmap>(nav_state.maps.at("costmap.dynamic"));
-  } catch (const std::out_of_range & e) {
-    return;
+  if (!costmap_activated_) {
+    costmap_ros_->activate();
+    costmap_activated_ = true;
   }
 
-  auto * dest = costmap_ros_->getCostmap();
+  if (!nav_state.goals.goals.empty()) {
+    geometry_msgs::msg::PoseStamped start;
+    start.header.frame_id = nav_state.odom.header.frame_id;
+    start.header.stamp = nav_state.odom.header.stamp;
+    start.pose = nav_state.odom.pose.pose;
 
-  dest->resizeMap(
-    map_->getSizeInCellsX(),
-    map_->getSizeInCellsY(),
-    map_->getResolution(),
-    map_->getOriginX(),
-    map_->getOriginY()
-  );
+    geometry_msgs::msg::PoseStamped goal;
+    goal.header.frame_id = nav_state.goals.goals[0].header.frame_id;
+    goal.header.stamp = nav_state.goals.goals[0].header.stamp;
+    goal.pose = nav_state.goals.goals[0].pose;
 
-  for (unsigned int y = 0; y < map_->getSizeInCellsY(); ++y) {
-    for (unsigned int x = 0; x < map_->getSizeInCellsX(); ++x) {
-      dest->setCost(x, y, map_->getCost(x, y));
+    path_ = planner_->createPlan(start, goal, []() {return false;});
+
+    if (path_.poses.empty()) {
+      RCLCPP_WARN(get_node()->get_logger(), "Path is empty");
+      return;
     }
+
+    path_pub_->publish(path_);
   }
-
-  geometry_msgs::msg::PoseStamped start;
-  start.header.frame_id = nav_state.odom.header.frame_id;
-  start.header.stamp = nav_state.odom.header.stamp;
-  start.pose = nav_state.odom.pose.pose;
-
-  geometry_msgs::msg::PoseStamped goal;
-  goal.header.frame_id = nav_state.goals.goals[0].header.frame_id;
-  goal.header.stamp = nav_state.goals.goals[0].header.stamp;
-  goal.pose = nav_state.goals.goals[0].pose;
-
-  path_ = planner_->createPlan(start, goal, []() {return false;});
-
-  if (path_.poses.empty()) {
-    RCLCPP_WARN(get_node()->get_logger(), "Path is empty");
-    return;
-  }
-
-  path_pub_->publish(path_);
 }
 
 }  // namespace easynav

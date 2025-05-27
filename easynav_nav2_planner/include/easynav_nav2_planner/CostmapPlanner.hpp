@@ -97,6 +97,11 @@ private:
   std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_ {};
 
   /**
+   * @brief Thread for the costmap node.
+   */
+  std::unique_ptr<nav2_util::NodeThread> costmap_thread_;
+
+  /**
    * @brief TF buffer for coordinate transformations.
    */
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -105,6 +110,11 @@ private:
    * @brief Publisher for the planned path.
    */
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+
+  /**
+   * @brief Flag indicating whether the static map has been activated.
+   */
+  bool costmap_activated_ {false};
 };
 
 }  // namespace easynav
