@@ -35,7 +35,11 @@
 #include "easynav_nav2_costmap_maps_manager/Costmap.hpp"
 
 #include "nav2_costmap_2d/costmap_2d_publisher.hpp"
+#include "nav2_costmap_2d/layered_costmap.hpp"
+#include "nav2_costmap_2d/costmap_layer.hpp"
+
 #include "std_srvs/srv/trigger.hpp"
+#include "pluginlib/class_loader.hpp"
 
 namespace easynav
 {
@@ -85,14 +89,7 @@ public:
    *
    * @param new_map Shared pointer to a new map object. Must be of type Costmap.
    */
-  void set_static_map(std::shared_ptr<MapsTypeBase> new_map);
-
-  /**
-   * @brief Replaces the current dynamic map.
-   *
-   * @param new_map Shared pointer to a new map object. Must be of type Costmap.
-   */
-  void set_dynamic_map(std::shared_ptr<MapsTypeBase> new_map);
+  void set_map(std::shared_ptr<MapsTypeBase> new_map);
 
 protected:
   /**
@@ -107,19 +104,14 @@ private:
   std::shared_ptr<Costmap> static_map_;
 
   /**
-   * @brief Dynamic costmap representation updated from perceptions.
+   * @brief Static map message used for publishing.
    */
-  std::shared_ptr<Costmap> dynamic_map_ = nullptr;
+  nav_msgs::msg::OccupancyGrid static_map_msgs_;
 
   /**
-   * @brief Publisher to convert and publish the static costmap as a nav_msgs::msg::OccupancyGrid.
+   * @brief Publisher to publish the occupancy grid representation of the static map.
    */
-  std::shared_ptr<nav2_costmap_2d::Costmap2DPublisher> static_costmap_pub_;
-
-  /**
-   * @brief Publisher to convert and publish the dynamic costmap as a nav_msgs::msg::OccupancyGrid.
-   */
-  std::shared_ptr<nav2_costmap_2d::Costmap2DPublisher> dynamic_costmap_pub_;
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr occ_pub_;
 
   /**
    * @brief Service to trigger saving the static map to disk.

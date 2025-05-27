@@ -39,6 +39,7 @@ CostmapMapsManager::on_initialize()
   const auto & plugin_name = get_plugin_name();
 
   std::string package_name, map_path_file;
+  std::vector<std::string> plugin_names_, filter_names_;
   node->declare_parameter(plugin_name + ".package", package_name);
   node->declare_parameter(plugin_name + ".map_path_file", map_path_file);
 
@@ -72,10 +73,8 @@ CostmapMapsManager::on_initialize()
     }
 
     auto static_map = std::make_shared<Costmap>(map);
-    auto dynamic_map = std::make_shared<Costmap>(map);
-
-    set_static_map(static_map);
-    set_dynamic_map(dynamic_map);
+    static_map_msgs_ = map;
+    set_map(static_map);
   }
 
   incoming_map_sub_ = node->create_subscription<nav_msgs::msg::OccupancyGrid>(
@@ -83,10 +82,8 @@ CostmapMapsManager::on_initialize()
     rclcpp::QoS(1).transient_local().reliable(),
     [this](nav_msgs::msg::OccupancyGrid::UniquePtr msg) {
       auto static_received_map = std::make_shared<Costmap>(*msg);
-      auto dynamic_received_map = std::make_shared<Costmap>(*msg);
-
-      set_static_map(static_received_map);
-      set_dynamic_map(dynamic_received_map);
+      static_map_msgs_ = *msg;
+      set_map(static_received_map);
     });
 
   savemap_srv_ = node->create_service<std_srvs::srv::Trigger>(
@@ -112,14 +109,13 @@ std::map<std::string, std::shared_ptr<MapsTypeBase>>
 CostmapMapsManager::get_maps()
 {
   std::map<std::string, std::shared_ptr<MapsTypeBase>> ret;
-  ret["costmap.static"] = static_map_;
-  ret["costmap.dynamic"] = dynamic_map_;
+  ret["costmap"] = static_map_;
 
   return ret;
 }
 
 void
-CostmapMapsManager::set_static_map(std::shared_ptr<MapsTypeBase> new_map)
+CostmapMapsManager::set_map(std::shared_ptr<MapsTypeBase> new_map)
 {
   auto typed_ptr = std::dynamic_pointer_cast<Costmap>(new_map);
   if (!typed_ptr) {
@@ -128,61 +124,18 @@ CostmapMapsManager::set_static_map(std::shared_ptr<MapsTypeBase> new_map)
   } else {
     static_map_ = typed_ptr;
 
-    static_costmap_pub_ = std::make_shared<nav2_costmap_2d::Costmap2DPublisher>(
-      get_node(),
-      static_map_.get(),
-      "map",
+    occ_pub_ = get_node()->create_publisher<nav_msgs::msg::OccupancyGrid>(
       get_node()->get_name() + std::string("/") + get_plugin_name() + "/map",
-      true);
+      rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
 
-    static_costmap_pub_->on_activate();
-    static_costmap_pub_->publishCostmap();
-  }
-}
-
-void
-CostmapMapsManager::set_dynamic_map(std::shared_ptr<MapsTypeBase> new_map)
-{
-  auto typed_ptr = std::dynamic_pointer_cast<Costmap>(new_map);
-  if (!typed_ptr) {
-    RCLCPP_WARN(get_node()->get_logger(),
-      "CostmapMapsManager::set_dynamic_map: pointer is not a Costmap");
-  } else {
-    dynamic_map_ = typed_ptr;
-
-    dynamic_costmap_pub_ = std::make_shared<nav2_costmap_2d::Costmap2DPublisher>(
-      get_node(),
-      dynamic_map_.get(),
-      "map",
-      get_node()->get_name() + std::string("/") + get_plugin_name() + "/dynamic_map",
-      true);
-
-    dynamic_costmap_pub_->on_activate();
+    occ_pub_->publish(static_map_msgs_);
   }
 }
 
 void
 CostmapMapsManager::update(const NavState & nav_state)
 {
-  std::memcpy(
-    dynamic_map_->getCharMap(),
-    static_map_->getCharMap(),
-    static_map_->getSizeInCellsX() * static_map_->getSizeInCellsY());
-
-  auto fused = PerceptionsOpsView(nav_state.perceptions)
-    .downsample(static_map_->getResolution())
-    .fuse("map")
-    ->filter({NAN, NAN, 0.1}, {NAN, NAN, NAN})
-    .as_points(0);
-
-  for (const auto & p : fused) {
-    unsigned int mx, my;
-    if (dynamic_map_->worldToMap(p.x, p.y, mx, my)) {
-      dynamic_map_->setCost(mx, my, nav2_costmap_2d::LETHAL_OBSTACLE);
-    }
-  }
-
-  dynamic_costmap_pub_->publishCostmap();
+  (void)nav_state;
 }
 
 }  // namespace easynav
