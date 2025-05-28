@@ -46,7 +46,7 @@ public:
   /**
    * @brief Destructor.
    */
-  ~CostmapPlanner() = default;
+  ~CostmapPlanner();
 
   /**
    * @brief Optional initialization logic.

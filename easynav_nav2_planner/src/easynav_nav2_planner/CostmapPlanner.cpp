@@ -75,6 +75,24 @@ std::expected<void, std::string> CostmapPlanner::on_initialize()
   return {};
 }
 
+CostmapPlanner::~CostmapPlanner()
+{
+  if (costmap_activated_) {
+    costmap_ros_->deactivate();
+    costmap_ros_->cleanup();
+    costmap_activated_ = false;
+  }
+
+  if (costmap_thread_) {
+    costmap_thread_.reset();
+  }
+
+  costmap_ros_.reset();
+  planner_.reset();
+  costmap_planner_loader_.reset();
+  tf_buffer_.reset();
+}
+
 nav_msgs::msg::Path CostmapPlanner::get_path()
 {
   return path_;
