@@ -141,6 +141,27 @@ std::expected<void, std::string> CostmapController::on_initialize()
   return {};
 }
 
+CostmapController::~CostmapController()
+{
+  if (costmap_activated_) {
+    costmap_ros_->deactivate();
+    costmap_ros_->cleanup();
+    costmap_activated_ = false;
+  }
+
+  if (costmap_thread_) {
+    costmap_thread_.reset();
+  }
+
+  costmap_ros_.reset();
+  controller_.reset();
+  progress_checker_loader_.reset();
+  progress_checker_.reset();
+  goal_checker_loader_.reset();
+  goal_checker_.reset();
+  lp_loader_.reset();
+}
+
 geometry_msgs::msg::TwistStamped CostmapController::get_cmd_vel()
 {
   return cmd_vel_;

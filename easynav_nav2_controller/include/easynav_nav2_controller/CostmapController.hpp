@@ -50,7 +50,7 @@ class CostmapController : public easynav::ControllerMethodBase
 {
 public:
   CostmapController() = default;
-  ~CostmapController() = default;
+  ~CostmapController();
 
   /**
    * @brief Initializes the control method plugin.
