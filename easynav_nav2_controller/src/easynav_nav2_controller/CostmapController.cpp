@@ -24,7 +24,6 @@
 
 #include "easynav_nav2_controller/CostmapController.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
-#include "easynav_nav2_costmap_maps_manager/Costmap.hpp"
 
 namespace easynav
 {

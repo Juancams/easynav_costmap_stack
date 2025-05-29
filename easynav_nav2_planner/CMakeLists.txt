@@ -14,20 +14,20 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(easynav_common REQUIRED)
 find_package(easynav_core REQUIRED)
+find_package(easynav_nav2_common REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(nav2_planner REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
-find_package(easynav_nav2_costmap_maps_manager REQUIRED)
 
 set(dependencies
   rclcpp
   rclcpp_lifecycle
   easynav_common
   easynav_core
+  easynav_nav2_common
   pluginlib
   nav2_planner
   nav2_costmap_2d
-  easynav_nav2_costmap_maps_manager
 )
 
 include_directories(include)

@@ -23,7 +23,7 @@
 #include <expected>
 
 #include "easynav_nav2_planner/CostmapPlanner.hpp"
-#include "easynav_nav2_costmap_maps_manager/Costmap.hpp"
+#include "easynav_nav2_common/Costmap.hpp"
 
 namespace easynav
 {

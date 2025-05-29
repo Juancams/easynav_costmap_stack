@@ -15,7 +15,6 @@
   <depend>easynav_core</depend>
   <depend>pluginlib</depend>
   <depend>nav2_controller</depend>
-  <depend>easynav_nav2_costmap_maps_manager</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

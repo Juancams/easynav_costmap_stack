@@ -28,7 +28,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "easynav_core/LocalizerMethodBase.hpp"
 #include "easynav_nav2_amcl/AMCLProxy.hpp"
-#include "easynav_nav2_costmap_maps_manager/Costmap.hpp"
+#include "easynav_nav2_common/Costmap.hpp"
 
 namespace easynav
 {

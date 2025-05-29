@@ -32,7 +32,7 @@
 
 #include "easynav_core/MapsManagerBase.hpp"
 #include "easynav_common/types/MapTypeBase.hpp"
-#include "easynav_nav2_costmap_maps_manager/Costmap.hpp"
+#include "easynav_nav2_common/Costmap.hpp"
 
 #include "nav2_costmap_2d/costmap_2d_publisher.hpp"
 #include "nav2_costmap_2d/layered_costmap.hpp"

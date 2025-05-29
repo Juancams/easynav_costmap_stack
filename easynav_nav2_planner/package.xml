@@ -13,10 +13,10 @@
   <depend>rclcpp_lifecycle</depend>
   <depend>easynav_common</depend>
   <depend>easynav_core</depend>
+  <depend>easynav_nav2_common</depend>
   <depend>pluginlib</depend>
   <depend>nav2_planner</depend>
   <depend>nav2_costmap_2d</depend>
-  <depend>easynav_nav2_costmap_maps_manager</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

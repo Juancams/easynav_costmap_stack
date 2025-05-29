@@ -17,7 +17,6 @@ find_package(easynav_core REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(nav2_controller REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
-find_package(easynav_nav2_costmap_maps_manager REQUIRED)
 
 set(dependencies
   rclcpp
@@ -28,7 +27,6 @@ set(dependencies
   ament_index_cpp
   nav2_controller
   nav2_costmap_2d
-  easynav_nav2_costmap_maps_manager
 )
 
 include_directories(include)

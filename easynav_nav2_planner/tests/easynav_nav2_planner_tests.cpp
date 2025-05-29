@@ -21,7 +21,6 @@
 #include <memory>
 
 #include "easynav_nav2_planner/CostmapPlanner.hpp"
-#include "easynav_nav2_costmap_maps_manager/Costmap.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
