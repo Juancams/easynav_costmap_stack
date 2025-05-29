@@ -112,7 +112,8 @@ TEST_F(CostmapPlannerTest, Initialize)
 {
   rclcpp::NodeOptions options;
   options.append_parameter_override("test.planner_plugin", std::string("GridBased"));
-  options.append_parameter_override("test.GridBased.plugin", std::string("nav2_navfn_planner::NavfnPlanner"));
+  options.append_parameter_override("test.GridBased.plugin",
+    std::string("nav2_navfn_planner::NavfnPlanner"));
 
   auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("costmap_planner_node", options);
 
@@ -122,9 +123,10 @@ TEST_F(CostmapPlannerTest, Initialize)
   EXPECT_TRUE(result.has_value());
 
   auto map = createOccupancyGrid(300, 300, 0.05, 0.0, 0.0);
-  auto publisher = node->create_publisher<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
+  auto publisher = node->create_publisher<nav_msgs::msg::OccupancyGrid>("/map",
+    rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
   publisher->on_activate();
-  publisher->publish(map); 
+  publisher->publish(map);
 
   easynav::NavState navstate;
 
@@ -149,10 +151,10 @@ TEST_F(CostmapPlannerTest, Initialize)
   rclcpp::sleep_for(std::chrono::milliseconds(100));
 
   auto path = planner->get_path();
-  EXPECT_EQ(path.poses.size(), 0); 
+  EXPECT_EQ(path.poses.size(), 0);
 
   planner->update(navstate);
 
   path = planner->get_path();
-  EXPECT_NE(path.poses.size(), 0); 
+  EXPECT_NE(path.poses.size(), 0);
 }

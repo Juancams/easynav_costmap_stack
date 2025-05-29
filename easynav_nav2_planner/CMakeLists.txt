@@ -15,7 +15,7 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(easynav_common REQUIRED)
 find_package(easynav_core REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(nav2_planner REQUIRED) 
+find_package(nav2_planner REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(easynav_nav2_costmap_maps_manager REQUIRED)
 
